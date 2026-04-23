@@ -16,14 +16,14 @@ const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers]
 });
 
-// ✅ TU ROL
+// ✅ ID DEL ROL
 const ROLE_ID = "1469148560489582694";
 
-// 🔑 PONER ESTO
-const CLIENT_ID = "TU_CLIENT_ID"; // ID del bot
-const GUILD_ID = "TU_SERVER_ID"; // ID de tu servidor
+// ✅ TUS IDS
+const CLIENT_ID = "1496661078619459615";
+const GUILD_ID = "1211757600379772939";
 
-// 👉 REGISTRAR COMANDO AUTOMÁTICAMENTE
+// 👉 COMANDO
 const commands = [
   new SlashCommandBuilder()
     .setName("apos")
@@ -32,6 +32,7 @@ const commands = [
 
 const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
 
+// 🚀 CUANDO PRENDE EL BOT
 client.once(Events.ClientReady, async () => {
   console.log(`Bot listo como ${client.user.tag}`);
 
@@ -46,55 +47,55 @@ client.once(Events.ClientReady, async () => {
   }
 });
 
-// 👉 COMANDO /apos
+// 👉 INTERACCIONES (comando + botón en uno solo)
 client.on(Events.InteractionCreate, async interaction => {
-  if (!interaction.isChatInputCommand()) return;
 
-  if (interaction.commandName === "apos") {
+  // 📌 COMANDO
+  if (interaction.isChatInputCommand()) {
+    if (interaction.commandName === "apos") {
 
-    const embed = new EmbedBuilder()
-      .setColor("#2b2d31")
-      .setTitle("🎯 Rol de Apostador")
-      .setDescription(
-        "Presioná el botón de abajo para **adquirir tu rol de apostador**.\n\n" +
-        "Accedé a beneficios exclusivos y participá en eventos."
-      )
-      .setFooter({ text: "Sistema automático de roles" });
+      const embed = new EmbedBuilder()
+        .setColor("#2b2d31")
+        .setTitle("🎯 Rol de Apostador")
+        .setDescription(
+          "Presioná el botón de abajo para **adquirir tu rol de apostador**.\n\n" +
+          "Accedé a beneficios exclusivos y participá en eventos."
+        )
+        .setFooter({ text: "Sistema automático de roles" });
 
-    const button = new ButtonBuilder()
-      .setCustomId("rol_apos")
-      .setLabel("Adquirir rol")
-      .setStyle(ButtonStyle.Success);
+      const button = new ButtonBuilder()
+        .setCustomId("rol_apos")
+        .setLabel("Adquirir rol")
+        .setStyle(ButtonStyle.Success);
 
-    const row = new ActionRowBuilder().addComponents(button);
+      const row = new ActionRowBuilder().addComponents(button);
 
-    await interaction.reply({
-      embeds: [embed],
-      components: [row]
-    });
+      await interaction.reply({
+        embeds: [embed],
+        components: [row]
+      });
+    }
   }
-});
 
-// 👉 BOTÓN
-client.on(Events.InteractionCreate, async interaction => {
-  if (!interaction.isButton()) return;
+  // 📌 BOTÓN
+  if (interaction.isButton()) {
+    if (interaction.customId === "rol_apos") {
+      const member = interaction.member;
 
-  if (interaction.customId === "rol_apos") {
-    const member = interaction.member;
+      if (member.roles.cache.has(ROLE_ID)) {
+        return interaction.reply({
+          content: "⚠️ Ya tenés este rol.",
+          ephemeral: true
+        });
+      }
 
-    if (member.roles.cache.has(ROLE_ID)) {
-      return interaction.reply({
-        content: "⚠️ Ya tenés este rol.",
+      await member.roles.add(ROLE_ID);
+
+      await interaction.reply({
+        content: "✅ Ya adquiriste el rol de apostador.",
         ephemeral: true
       });
     }
-
-    await member.roles.add(ROLE_ID);
-
-    await interaction.reply({
-      content: "✅ Ya adquiriste el rol de apostador.",
-      ephemeral: true
-    });
   }
 });
 
