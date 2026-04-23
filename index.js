@@ -6,7 +6,10 @@ const {
   ButtonBuilder,
   ButtonStyle,
   EmbedBuilder,
-  Events
+  Events,
+  REST,
+  Routes,
+  SlashCommandBuilder
 } = require("discord.js");
 
 const client = new Client({
@@ -16,8 +19,31 @@ const client = new Client({
 // ✅ TU ROL
 const ROLE_ID = "1469148560489582694";
 
-client.once(Events.ClientReady, () => {
+// 🔑 PONER ESTO
+const CLIENT_ID = "TU_CLIENT_ID"; // ID del bot
+const GUILD_ID = "TU_SERVER_ID"; // ID de tu servidor
+
+// 👉 REGISTRAR COMANDO AUTOMÁTICAMENTE
+const commands = [
+  new SlashCommandBuilder()
+    .setName("apos")
+    .setDescription("Obtener rol de apostador")
+].map(cmd => cmd.toJSON());
+
+const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
+
+client.once(Events.ClientReady, async () => {
   console.log(`Bot listo como ${client.user.tag}`);
+
+  try {
+    await rest.put(
+      Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
+      { body: commands }
+    );
+    console.log("Comando /apos registrado");
+  } catch (error) {
+    console.error(error);
+  }
 });
 
 // 👉 COMANDO /apos
@@ -27,7 +53,7 @@ client.on(Events.InteractionCreate, async interaction => {
   if (interaction.commandName === "apos") {
 
     const embed = new EmbedBuilder()
-      .setColor("#2b2d31") // gris oscuro estilo discord
+      .setColor("#2b2d31")
       .setTitle("🎯 Rol de Apostador")
       .setDescription(
         "Presioná el botón de abajo para **adquirir tu rol de apostador**.\n\n" +
