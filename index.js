@@ -1,4 +1,3 @@
-
 require("dotenv").config();
 
 const {
@@ -176,52 +175,51 @@ function generarFutbol() {
 }
 
 // ==============================
-// 🥅 PENAL
+// 🥅 PENAL (50% GOL / 50% FALLO)
 // ==============================
 
 function generarPenal() {
   const lados = ["izquierda", "centro", "derecha"];
+  const ladoPateado = lados[Math.floor(Math.random() * lados.length)];
 
-  const ladoPateado =
-    lados[Math.floor(Math.random() * lados.length)];
+  // 50% de probabilidad exacta de hacer gol
+  const gol = Math.random() < 0.5;
 
-  const ladoArquero =
-    lados[Math.floor(Math.random() * lados.length)];
-
-  // Si adivina el lado, el arquero tiene un 75% de
-  // probabilidades de atajar el penal.
-  const gol =
-    ladoPateado !== ladoArquero || Math.random() >= 0.75;
-
-  let titulo, comentario, color, movimientoArquero;
+  let ladoArquero, titulo, comentario, color, movimientoArquero;
 
   if (gol) {
     titulo = "⚽ ¡GOOOOOOL!";
     color = 0x2ECC71;
 
-    if (ladoPateado !== ladoArquero) {
-      movimientoArquero =
-        `Se tiró a la **${ladoArquero}**, pero la pelota fue a la **${ladoPateado}**.`;
+    // Si es gol, el arquero o bien se tira a otro lado o roza la pelota pero entra igual
+    const coincidaLado = Math.random() < 0.3;
+    ladoArquero = coincidaLado 
+      ? ladoPateado 
+      : lados.filter(l => l !== ladoPateado)[Math.floor(Math.random() * 2)];
 
-      comentario =
-        "¡Lo engañó por completo! El arquero quedó pagando.";
+    if (ladoArquero !== ladoPateado) {
+      movimientoArquero = `Se tiró a la **${ladoArquero}**, pero la pelota fue a la **${ladoPateado}**.`;
+      comentario = "¡Lo engañó por completo! El arquero quedó pagando.";
     } else {
-      movimientoArquero =
-        `Se tiró a la **${ladoArquero}**, pero no pudo detener el disparo.`;
-
-      comentario =
-        "¡Le ganó con un remate potente! La pelota terminó adentro.";
+      movimientoArquero = `Se tiró a la **${ladoArquero}**, pero no pudo detener el disparo.`;
+      comentario = "¡Le ganó con un remate potente! La pelota terminó adentro.";
     }
 
   } else {
-    titulo = "🧤 ¡ATAJADÓN DEL ARQUERO!";
+    titulo = "🧤 ¡NO HAY GOL!";
     color = 0xE74C3C;
 
-    movimientoArquero =
-      `Se tiró a la **${ladoArquero}** y adivinó el remate.`;
+    const fueAtajado = Math.random() < 0.7; // 70% atajada, 30% fuera/travesaño
 
-    comentario =
-      "¡No hay gol! El arquero se quedó con la pelota y salvó a su equipo.";
+    if (fueAtajado) {
+      ladoArquero = ladoPateado;
+      movimientoArquero = `Se tiró a la **${ladoArquero}** y adivinó el remate.`;
+      comentario = "¡Atajadón del arquero! Se quedó con la pelota y salvó a su equipo.";
+    } else {
+      ladoArquero = lados[Math.floor(Math.random() * lados.length)];
+      movimientoArquero = `El arquero se tiró a la **${ladoArquero}**.`;
+      comentario = "¡El remate se fue completamente desviado por arriba del travesaño!";
+    }
   }
 
   return {
@@ -369,7 +367,7 @@ client.on(Events.MessageCreate, async message => {
           },
           {
             name: "📋 Resultado",
-            value: `**${gol ? "GOL" : "ATAJADO"}**\n${comentario}`
+            value: `**${gol ? "GOL" : "ERRADO / ATAJADO"}**\n${comentario}`
           }
         )
         .setFooter({
