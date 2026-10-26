@@ -1,4 +1,6 @@
+
 require("dotenv").config();
+
 const {
   Client,
   GatewayIntentBits,
@@ -12,88 +14,230 @@ const {
   SlashCommandBuilder
 } = require("discord.js");
 
+// ==============================
+// CONFIGURACIÓN DEL BOT
+// ==============================
+
+const ROLE_ID = "1469148560489582694";
+const CLIENT_ID = "1496661078619459615";
+const GUILD_ID = "1211757600379772939";
+
+if (!process.env.TOKEN) {
+  throw new Error("Falta TOKEN en el archivo .env");
+}
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent // ⚠️ Necesario para leer comandos con prefijo (.)
+    GatewayIntentBits.MessageContent
   ]
 });
 
-// ✅ IDs DE CONFIGURACIÓN
-const ROLE_ID = "1469148560489582694";
-const CLIENT_ID = "1496661078619459615";
-const GUILD_ID = "1211757600379772939";
+// ==============================
+// COMANDOS SLASH
+// ==============================
 
-// 👉 COMANDOS SLASH (Solo dejamos /apos)
 const commands = [
   new SlashCommandBuilder()
     .setName("apos")
     .setDescription("Obtener rol de apostador")
-].map(cmd => cmd.toJSON());
+].map(command => command.toJSON());
 
-const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
+const rest = new REST({ version: "10" })
+  .setToken(process.env.TOKEN);
 
-// 🎲 FUNCIÓN PARA GENERAR LA DISTANCIA Y MENSAJES EXAGERADOS
+// ==============================
+// ✈️ AVIONCITO
+// ==============================
+
 function generarAvioncito() {
   const rand = Math.random() * 100;
 
   let distancia, titulo, comentario, color;
 
-  if (rand < 25) { // 25% Pésimo
+  if (rand < 25) {
     distancia = Math.random() * (2.00 - 0.10) + 0.10;
     titulo = "💥 ¡DESASTRE AERODINÁMICO!";
-    comentario = "Se estrelló contra la mesa apenas rozó el aire. Ni un plomo de pesca caía tan rápido.";
+    comentario =
+      "Se estrelló contra la mesa apenas rozó el aire. Ni un plomo de pesca caía tan rápido.";
     color = 0xE74C3C;
 
-  } else if (rand < 60) { // 35% Corto
+  } else if (rand < 60) {
     distancia = Math.random() * (50.00 - 2.01) + 2.01;
     titulo = "🍃 VUELO DOMÉSTICO";
-    comentario = "Un vuelo modesto pero digno. Se clavó justo al lado del bote de basura.";
+    comentario =
+      "Un vuelo modesto pero digno. Se clavó justo al lado del bote de basura.";
     color = 0xE67E22;
 
-  } else if (rand < 85) { // 25% Medio
+  } else if (rand < 85) {
     distancia = Math.random() * (500.00 - 50.01) + 50.01;
     titulo = "✈️ PLANEADOR EXPERTO";
-    comentario = "¡Impresionante! Agarró una corriente térmica y cruzó varias manzanas antes de tocar tierra.";
+    comentario =
+      "¡Impresionante! Agarró una corriente térmica y cruzó varias manzanas antes de tocar tierra.";
     color = 0xF1C40F;
 
-  } else if (rand < 95) { // 10% Largo
+  } else if (rand < 95) {
     distancia = Math.random() * (10000.00 - 500.01) + 500.01;
     titulo = "🚀 TURBINA SUPERSÓNICA";
-    comentario = "¡Cruzó la ciudad entera! Superó la altura de los edificios y casi se lo traga la turbina de un Boeing 747.";
+    comentario =
+      "¡Cruzó la ciudad entera! Superó la altura de los edificios y casi se lo traga la turbina de un Boeing 747.";
     color = 0x2ECC71;
 
-  } else if (rand < 99) { // 4% Épico
+  } else if (rand < 99) {
     distancia = Math.random() * (1000000.00 - 10000.01) + 10000.01;
     titulo = "🌌 ÓRBITA ESTRATOSFÉRICA";
-    comentario = "Rompió la barrera del sonido, cruzó la estratósfera y rozó la Estación Espacial Internacional.";
+    comentario =
+      "Rompió la barrera del sonido, cruzó la estratósfera y rozó la Estación Espacial Internacional.";
     color = 0x3498DB;
 
-  } else { // 1% Legendario
+  } else {
     distancia = Math.random() * (40075000.00 - 1000001.00) + 1000001.00;
     titulo = "🪐 VIAJERO INTERGALÁCTICO";
-    comentario = "¡DESAFÍA TODAS LAS LEYES DE LA FÍSICA! Le dio la vuelta completa al planeta Tierra y sigue flotando en el vacío exterior.";
+    comentario =
+      "¡DESAFÍA TODAS LAS LEYES DE LA FÍSICA! Le dio la vuelta completa al planeta Tierra y sigue flotando en el vacío exterior.";
     color = 0x9B59B6;
   }
 
   return { distancia, titulo, comentario, color };
 }
 
-// 📏 FORMATEADOR DE DISTANCIA
 function formatearDistancia(metros) {
   if (metros >= 1000) {
     const km = metros / 1000;
-    const kmStr = km.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const mStr = metros.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const kmStr = km.toLocaleString("es-AR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+
+    const mStr = metros.toLocaleString("es-AR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+
     return `${kmStr} km (${mStr} m)`;
-  } else {
-    return `${metros.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} metros`;
   }
+
+  return `${metros.toLocaleString("es-AR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })} metros`;
 }
 
-// 🚀 CUANDO PRENDE EL BOT
+// ==============================
+// ⚽ FUTBOL: JUEGUITOS
+// ==============================
+
+function generarFutbol() {
+  const jueguitos = Math.floor(Math.random() * 100) + 1;
+
+  let titulo, comentario, color;
+
+  if (jueguitos <= 5) {
+    titulo = "💀 ¡PIERNAS DE MADERA!";
+    comentario =
+      "La pelota tocó el piso antes de que pudiera acomodarse.";
+    color = 0xE74C3C;
+
+  } else if (jueguitos <= 15) {
+    titulo = "🥴 FUTBOLISTA DE POTRERO";
+    comentario =
+      "Unos toques y se le escapó la pelota. ¡A practicar!";
+    color = 0xE67E22;
+
+  } else if (jueguitos <= 35) {
+    titulo = "⚽ BUEN DOMINIO";
+    comentario =
+      "Tiene buen control. Ya se puede armar un partidito.";
+    color = 0xF1C40F;
+
+  } else if (jueguitos <= 60) {
+    titulo = "🔥 CRACK DEL BARRIO";
+    comentario =
+      "La pelota parece pegada al pie. ¡Qué calidad!";
+    color = 0x2ECC71;
+
+  } else if (jueguitos <= 85) {
+    titulo = "🐐 NIVEL LEYENDA";
+    comentario =
+      "¡Una máquina! Los defensores ya están pidiendo el cambio.";
+    color = 0x3498DB;
+
+  } else {
+    titulo = "👑 REY DE LOS JUEGUITOS";
+    comentario =
+      "¡Una locura! Puede seguir hasta que apaguen las luces del estadio.";
+    color = 0x9B59B6;
+  }
+
+  return { jueguitos, titulo, comentario, color };
+}
+
+// ==============================
+// 🥅 PENAL
+// ==============================
+
+function generarPenal() {
+  const lados = ["izquierda", "centro", "derecha"];
+
+  const ladoPateado =
+    lados[Math.floor(Math.random() * lados.length)];
+
+  const ladoArquero =
+    lados[Math.floor(Math.random() * lados.length)];
+
+  // Si adivina el lado, el arquero tiene un 75% de
+  // probabilidades de atajar el penal.
+  const gol =
+    ladoPateado !== ladoArquero || Math.random() >= 0.75;
+
+  let titulo, comentario, color, movimientoArquero;
+
+  if (gol) {
+    titulo = "⚽ ¡GOOOOOOL!";
+    color = 0x2ECC71;
+
+    if (ladoPateado !== ladoArquero) {
+      movimientoArquero =
+        `Se tiró a la **${ladoArquero}**, pero la pelota fue a la **${ladoPateado}**.`;
+
+      comentario =
+        "¡Lo engañó por completo! El arquero quedó pagando.";
+    } else {
+      movimientoArquero =
+        `Se tiró a la **${ladoArquero}**, pero no pudo detener el disparo.`;
+
+      comentario =
+        "¡Le ganó con un remate potente! La pelota terminó adentro.";
+    }
+
+  } else {
+    titulo = "🧤 ¡ATAJADÓN DEL ARQUERO!";
+    color = 0xE74C3C;
+
+    movimientoArquero =
+      `Se tiró a la **${ladoArquero}** y adivinó el remate.`;
+
+    comentario =
+      "¡No hay gol! El arquero se quedó con la pelota y salvó a su equipo.";
+  }
+
+  return {
+    ladoPateado,
+    movimientoArquero,
+    gol,
+    titulo,
+    comentario,
+    color
+  };
+}
+
+// ==============================
+// 🚀 BOT LISTO
+// ==============================
+
 client.once(Events.ClientReady, async () => {
   console.log(`Bot listo como ${client.user.tag}`);
 
@@ -102,38 +246,158 @@ client.once(Events.ClientReady, async () => {
       Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
       { body: commands }
     );
-    console.log("Comando /apos registrado correctamente");
+
+    console.log("Comando /apos registrado correctamente.");
   } catch (error) {
-    console.error("Error al registrar comandos:", error);
+    console.error("Error al registrar comandos slash:", error);
   }
 });
 
-// 📌 COMANDO CON PREFIJO (.avioncito)
+// ==============================
+// 📌 COMANDOS CON PREFIJO
+// ==============================
+
 client.on(Events.MessageCreate, async message => {
-  if (message.author.bot) return; // Ignora bots
+  if (message.author.bot) return;
 
-  if (message.content.toLowerCase() === ".avioncito") {
-    const { distancia, titulo, comentario, color } = generarAvioncito();
-    const distanciaTexto = formatearDistancia(distancia);
-    const nombreUsuario = message.member?.displayName || message.author.username;
+  const comando = message.content.toLowerCase().trim();
 
-    const embed = new EmbedBuilder()
-      .setColor(color)
-      .setTitle(`✈️ ${titulo}`)
-      .setDescription(`**${nombreUsuario}** lanzó su avioncito de papel.`)
-      .addFields(
-        { name: "📏 Distancia recorrida", value: `\`\`\`\n${distanciaTexto}\n\`\`\``, inline: false },
-        { name: "📝 Resultado", value: comentario, inline: false }
-      );
+  const nombreUsuario =
+    message.member?.displayName || message.author.username;
 
-    await message.channel.send({ embeds: [embed] });
+  try {
+    // ✈️ AVIONCITO
+    if (comando === ".avioncito") {
+      const {
+        distancia,
+        titulo,
+        comentario,
+        color
+      } = generarAvioncito();
+
+      const distanciaTexto = formatearDistancia(distancia);
+
+      const embed = new EmbedBuilder()
+        .setColor(color)
+        .setTitle(`✈️ ${titulo}`)
+        .setDescription(
+          `**${nombreUsuario}** lanzó su avioncito de papel.`
+        )
+        .addFields(
+          {
+            name: "📏 Distancia recorrida",
+            value: `\`\`\`\n${distanciaTexto}\n\`\`\``
+          },
+          {
+            name: "📝 Resultado",
+            value: comentario
+          }
+        );
+
+      return await message.channel.send({
+        embeds: [embed]
+      });
+    }
+
+    // ⚽ FUTBOL
+    if (comando === ".futbol") {
+      const {
+        jueguitos,
+        titulo,
+        comentario,
+        color
+      } = generarFutbol();
+
+      const embed = new EmbedBuilder()
+        .setColor(color)
+        .setTitle(titulo)
+        .setDescription(
+          `⚽ **${nombreUsuario}** se puso a hacer jueguitos con la pelota.`
+        )
+        .addFields(
+          {
+            name: "🔢 Jueguitos realizados",
+            value: `**${jueguitos}**`,
+            inline: true
+          },
+          {
+            name: "🏆 Categoría",
+            value: titulo,
+            inline: true
+          },
+          {
+            name: "📝 Resultado",
+            value: comentario
+          }
+        )
+        .setFooter({
+          text: "Desafío de fútbol • Resultado aleatorio"
+        });
+
+      return await message.channel.send({
+        embeds: [embed]
+      });
+    }
+
+    // 🥅 PENAL
+    if (comando === ".penal") {
+      const {
+        ladoPateado,
+        movimientoArquero,
+        gol,
+        titulo,
+        comentario,
+        color
+      } = generarPenal();
+
+      const embed = new EmbedBuilder()
+        .setColor(color)
+        .setTitle(titulo)
+        .setDescription(
+          `🥅 **${nombreUsuario}** se prepara para patear el penal...`
+        )
+        .addFields(
+          {
+            name: "🎯 Dirección del remate",
+            value: `La pelota fue a la **${ladoPateado}**.`,
+            inline: true
+          },
+          {
+            name: "🧤 Movimiento del arquero",
+            value: movimientoArquero,
+            inline: true
+          },
+          {
+            name: "📋 Resultado",
+            value: `**${gol ? "GOL" : "ATAJADO"}**\n${comentario}`
+          }
+        )
+        .setFooter({
+          text: "Penal • Simulación aleatoria"
+        });
+
+      return await message.channel.send({
+        embeds: [embed]
+      });
+    }
+
+  } catch (error) {
+    console.error("Error al ejecutar comando:", error);
+
+    if (message.channel.isSendable()) {
+      await message.channel.send(
+        "❌ Hubo un error al ejecutar el comando."
+      ).catch(console.error);
+    }
   }
 });
 
-// 📌 INTERACCIONES SLASH Y BOTONES
-client.on(Events.InteractionCreate, async interaction => {
+// ==============================
+// 🎯 SLASH COMMAND Y BOTÓN DE ROL
+// ==============================
 
-  // Slash Command /apos
+client.on(Events.InteractionCreate, async interaction => {
+  // Comando /apos
   if (interaction.isChatInputCommand()) {
     if (interaction.commandName === "apos") {
       const embed = new EmbedBuilder()
@@ -143,49 +407,68 @@ client.on(Events.InteractionCreate, async interaction => {
           "Presioná el botón de abajo para **adquirir tu rol de apostador**.\n\n" +
           "Accedé a beneficios exclusivos y participá en eventos."
         )
-        .setFooter({ text: "Sistema automático de roles" });
+        .setFooter({
+          text: "Sistema automático de roles"
+        });
 
       const button = new ButtonBuilder()
         .setCustomId("rol_apos")
         .setLabel("Adquirir rol")
         .setStyle(ButtonStyle.Success);
 
-      const row = new ActionRowBuilder().addComponents(button);
+      const row = new ActionRowBuilder()
+        .addComponents(button);
 
-      await interaction.reply({
+      return interaction.reply({
         embeds: [embed],
         components: [row]
       });
     }
   }
 
-  // Botón de rol
+  // Botón para asignar el rol
   if (interaction.isButton()) {
     if (interaction.customId === "rol_apos") {
-      const member = interaction.member;
-
-      if (member.roles.cache.has(ROLE_ID)) {
-        return interaction.reply({
-          content: "⚠️ Ya tenés este rol.",
-          ephemeral: true
-        });
-      }
-
       try {
+        const member = await interaction.guild.members.fetch(
+          interaction.user.id
+        );
+
+        if (member.roles.cache.has(ROLE_ID)) {
+          return interaction.reply({
+            content: "⚠️ Ya tenés este rol.",
+            ephemeral: true
+          });
+        }
+
         await member.roles.add(ROLE_ID);
-        await interaction.reply({
+
+        return interaction.reply({
           content: "✅ Ya adquiriste el rol de apostador.",
           ephemeral: true
         });
-      } catch (err) {
-        console.error("Error al asignar rol:", err);
-        await interaction.reply({
-          content: "❌ Hubo un error al intentar asignarte el rol. Verificá los permisos del bot.",
+
+      } catch (error) {
+        console.error("Error al asignar rol:", error);
+
+        const respuesta = {
+          content:
+            "❌ No pude asignarte el rol. Verificá que el bot tenga el permiso Administrar roles y que su rol esté por encima del rol que querés asignar.",
           ephemeral: true
-        });
+        };
+
+        if (interaction.replied || interaction.deferred) {
+          return interaction.followUp(respuesta);
+        }
+
+        return interaction.reply(respuesta);
       }
     }
   }
 });
+
+// ==============================
+// 🔑 INICIAR SESIÓN
+// ==============================
 
 client.login(process.env.TOKEN);
