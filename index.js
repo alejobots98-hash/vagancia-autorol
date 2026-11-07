@@ -84,6 +84,7 @@ function crearBotonesVasos(disabled = false) {
 // ==============================
 
 const auraStats = new Map();
+const auraDuels = new Map();
 
 function obtenerStatsAura(userId) {
   if (!auraStats.has(userId)) {
@@ -98,10 +99,6 @@ function obtenerStatsAura(userId) {
 
   return auraStats.get(userId);
 }
-
-// ==============================
-// ⚡ GENERADOR DE AURA
-// ==============================
 
 function generarAura() {
   const rand = Math.random();
@@ -213,6 +210,117 @@ const frasesEmpate = [
 
 function fraseAleatoria(lista) {
   return lista[Math.floor(Math.random() * lista.length)];
+}
+
+// ==============================
+// ⚡ GENERAR RESULTADO DEL DUELO
+// ==============================
+
+function crearResultadoAura(jugador1, jugador2) {
+  const aura1 = generarAura();
+  const aura2 = generarAura();
+
+  const stats1 = obtenerStatsAura(jugador1.id);
+  const stats2 = obtenerStatsAura(jugador2.id);
+
+  stats1.duelos++;
+  stats2.duelos++;
+
+  stats1.auraTotal += aura1.cantidad;
+  stats2.auraTotal += aura2.cantidad;
+
+  let resultado;
+  let fraseFinal;
+  let colorFinal;
+
+  if (aura1.cantidad > aura2.cantidad) {
+    stats1.victorias++;
+    stats2.derrotas++;
+
+    resultado = `🏆 ¡<@${jugador1.id}> GANÓ LA BATALLA!`;
+
+    fraseFinal =
+      `👑 **${fraseAleatoria(frasesGanador)}**\n\n` +
+      `💀 **${fraseAleatoria(frasesPerdedor)}**`;
+
+    colorFinal = 0x2ECC71;
+
+  } else if (aura2.cantidad > aura1.cantidad) {
+    stats2.victorias++;
+    stats1.derrotas++;
+
+    resultado = `🏆 ¡<@${jugador2.id}> GANÓ LA BATALLA!`;
+
+    fraseFinal =
+      `👑 **${fraseAleatoria(frasesGanador)}**\n\n` +
+      `💀 **${fraseAleatoria(frasesPerdedor)}**`;
+
+    colorFinal = 0x2ECC71;
+
+  } else {
+    stats1.empates++;
+    stats2.empates++;
+
+    resultado = "🤝 ¡EMPATE!";
+
+    fraseFinal = `😂 **${fraseAleatoria(frasesEmpate)}**`;
+
+    colorFinal = 0xF1C40F;
+  }
+
+  const embed = new EmbedBuilder()
+    .setColor(colorFinal)
+    .setTitle("⚡ BATALLA DE AURA")
+    .setDescription(
+      `**${jugador1.username}** VS **${jugador2.username}**\n\n` +
+      "⚔️ ¡El duelo de aura ha terminado!"
+    )
+    .addFields(
+      {
+        name: `👤 ${jugador1.username}`,
+        value:
+          `**${formatearAura(aura1.cantidad)}** de aura\n` +
+          `${aura1.categoria}\n` +
+          `_${aura1.comentario}_`,
+        inline: true
+      },
+      {
+        name: `👤 ${jugador2.username}`,
+        value:
+          `**${formatearAura(aura2.cantidad)}** de aura\n` +
+          `${aura2.categoria}\n` +
+          `_${aura2.comentario}_`,
+        inline: true
+      },
+      {
+        name: "🏆 RESULTADO",
+        value: resultado
+      },
+      {
+        name: "💬 VEREDICTO DEL MEDIDOR",
+        value: fraseFinal
+      },
+      {
+        name: "📊 ESTADÍSTICAS",
+        value:
+          `**${jugador1.username}:**\n` +
+          `🏆 Victorias: ${stats1.victorias}\n` +
+          `💀 Derrotas: ${stats1.derrotas}\n` +
+          `🤝 Empates: ${stats1.empates}\n` +
+          `⚔️ Duelos: ${stats1.duelos}\n\n` +
+          `**${jugador2.username}:**\n` +
+          `🏆 Victorias: ${stats2.victorias}\n` +
+          `💀 Derrotas: ${stats2.derrotas}\n` +
+          `🤝 Empates: ${stats2.empates}\n` +
+          `⚔️ Duelos: ${stats2.duelos}`
+      }
+    )
+    .setFooter({
+      text: "LA VAGANCIA • Sistema de aura aleatorio"
+    })
+    .setTimestamp();
+
+  return embed;
 }
 
 // ==============================
@@ -657,6 +765,81 @@ client.on(Events.MessageCreate, async message => {
 client.on(Events.InteractionCreate, async interaction => {
 
   // ==============================
+  // ⚡ BOTONES DEL DUELO DE AURA
+  // ==============================
+
+  if (
+    interaction.isButton() &&
+    interaction.customId.startsWith("aura_")
+  ) {
+    const partes = interaction.customId.split("_");
+    const accion = partes[1];
+    const idDuelo = partes.slice(2).join("_");
+
+    const duelo = auraDuels.get(idDuelo);
+
+    if (!duelo) {
+      return interaction.reply({
+        content: "⌛ Este desafío ya no está disponible.",
+        ephemeral: true
+      });
+    }
+
+    // Solo el usuario desafiado puede responder
+    if (interaction.user.id !== duelo.rivalId) {
+      return interaction.reply({
+        content: "❌ ¡Solamente la persona desafiada puede responder!",
+        ephemeral: true
+      });
+    }
+
+    // RECHAZAR
+    if (accion === "rechazar") {
+      auraDuels.delete(idDuelo);
+
+      return interaction.update({
+        content: "❌ El desafío de aura fue rechazado.",
+        embeds: [
+          new EmbedBuilder()
+            .setColor(0xE74C3C)
+            .setTitle("🚫 DESAFÍO RECHAZADO")
+            .setDescription(
+              `<@${duelo.rivalId}> rechazó el duelo de aura de <@${duelo.desafiadorId}>.`
+            )
+        ],
+        components: []
+      });
+    }
+
+    // ACEPTAR
+    if (accion === "aceptar") {
+      auraDuels.delete(idDuelo);
+
+      const jugador1 = await interaction.client.users
+        .fetch(duelo.desafiadorId)
+        .catch(() => null);
+
+      const jugador2 = interaction.user;
+
+      if (!jugador1) {
+        return interaction.update({
+          content: "❌ No pude encontrar al jugador que inició el desafío.",
+          embeds: [],
+          components: []
+        });
+      }
+
+      const embed = crearResultadoAura(jugador1, jugador2);
+
+      return interaction.update({
+        content: `⚡ <@${jugador1.id}> VS <@${jugador2.id}>`,
+        embeds: [embed],
+        components: []
+      });
+    }
+  }
+
+  // ==============================
   // 🥤 ENCONTRÁ LA BOLITA
   // ==============================
 
@@ -928,121 +1111,83 @@ client.on(Events.InteractionCreate, async interaction => {
         });
       }
 
-      const jugador1 = interaction.user;
-      const jugador2 = rival;
+      // Evitar desafíos pendientes duplicados para cualquiera de los dos
+      const dueloPendiente = [...auraDuels.values()].some(duelo =>
+        duelo.desafiadorId === interaction.user.id ||
+        duelo.rivalId === interaction.user.id ||
+        duelo.desafiadorId === rival.id ||
+        duelo.rivalId === rival.id
+      );
 
-      const aura1 = generarAura();
-      const aura2 = generarAura();
-
-      const stats1 = obtenerStatsAura(jugador1.id);
-      const stats2 = obtenerStatsAura(jugador2.id);
-
-      stats1.duelos++;
-      stats2.duelos++;
-
-      stats1.auraTotal += aura1.cantidad;
-      stats2.auraTotal += aura2.cantidad;
-
-      let ganador;
-      let fraseFinal;
-      let colorFinal;
-      let resultado;
-
-      if (aura1.cantidad > aura2.cantidad) {
-        ganador = jugador1;
-
-        stats1.victorias++;
-        stats2.derrotas++;
-
-        resultado = `🏆 ¡<@${ganador.id}> GANÓ LA BATALLA!`;
-
-        fraseFinal =
-          `👑 **${fraseAleatoria(frasesGanador)}**\n\n` +
-          `💀 **${fraseAleatoria(frasesPerdedor)}**`;
-
-        colorFinal = 0x2ECC71;
-
-      } else if (aura2.cantidad > aura1.cantidad) {
-        ganador = jugador2;
-
-        stats2.victorias++;
-        stats1.derrotas++;
-
-        resultado = `🏆 ¡<@${ganador.id}> GANÓ LA BATALLA!`;
-
-        fraseFinal =
-          `👑 **${fraseAleatoria(frasesGanador)}**\n\n` +
-          `💀 **${fraseAleatoria(frasesPerdedor)}**`;
-
-        colorFinal = 0x2ECC71;
-
-      } else {
-        stats1.empates++;
-        stats2.empates++;
-
-        resultado = "🤝 ¡EMPATE!";
-
-        fraseFinal = `😂 **${fraseAleatoria(frasesEmpate)}**`;
-
-        colorFinal = 0xF1C40F;
+      if (dueloPendiente) {
+        return interaction.reply({
+          content: "⏳ Uno de ustedes ya tiene un desafío de aura pendiente.",
+          ephemeral: true
+        });
       }
 
+      const idDuelo = interaction.id;
+
       const embed = new EmbedBuilder()
-        .setColor(colorFinal)
-        .setTitle("⚡ BATALLA DE AURA")
+        .setColor(0x9B59B6)
+        .setTitle("⚡ ¡DESAFÍO DE AURA!")
         .setDescription(
-          `**${jugador1.username}** desafió a **${jugador2.username}**.\n\n` +
-          "⚔️ ¡El duelo de aura ha terminado!"
-        )
-        .addFields(
-          {
-            name: `👤 ${jugador1.username}`,
-            value:
-              `**${formatearAura(aura1.cantidad)}** de aura\n` +
-              `${aura1.categoria}\n` +
-              `_${aura1.comentario}_`,
-            inline: true
-          },
-          {
-            name: `👤 ${jugador2.username}`,
-            value:
-              `**${formatearAura(aura2.cantidad)}** de aura\n` +
-              `${aura2.categoria}\n` +
-              `_${aura2.comentario}_`,
-            inline: true
-          },
-          {
-            name: "🏆 RESULTADO",
-            value: resultado
-          },
-          {
-            name: "💬 VEREDICTO DEL MEDIDOR",
-            value: fraseFinal
-          },
-          {
-            name: "📊 ESTADÍSTICAS",
-            value:
-              `**${jugador1.username}:**\n` +
-              `🏆 Victorias: ${stats1.victorias}\n` +
-              `💀 Derrotas: ${stats1.derrotas}\n` +
-              `🤝 Empates: ${stats1.empates}\n` +
-              `⚔️ Duelos: ${stats1.duelos}\n\n` +
-              `**${jugador2.username}:**\n` +
-              `🏆 Victorias: ${stats2.victorias}\n` +
-              `💀 Derrotas: ${stats2.derrotas}\n` +
-              `🤝 Empates: ${stats2.empates}\n` +
-              `⚔️ Duelos: ${stats2.duelos}`
-          }
+          `**${interaction.user.username}** desafió a **${rival.username}** a una batalla de aura.\n\n` +
+          `${rival}, ¿aceptás el desafío?\n\n` +
+          "⚔️ Si aceptás, se generará el aura de ambos y se decidirá quién gana."
         )
         .setFooter({
-          text: "LA VAGANCIA • Sistema de aura aleatorio"
+          text: "LA VAGANCIA • Tenés 60 segundos para responder"
         })
         .setTimestamp();
 
-      return interaction.reply({
-        content: `⚡ <@${jugador1.id}> VS <@${jugador2.id}>`,
-        embeds: [embed]
+      const botones = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId(`aura_aceptar_${idDuelo}`)
+          .setLabel("Aceptar duelo")
+          .setEmoji("⚔️")
+          .setStyle(ButtonStyle.Success),
+        new ButtonBuilder()
+          .setCustomId(`aura_rechazar_${idDuelo}`)
+          .setLabel("Rechazar")
+          .setEmoji("❌")
+          .setStyle(ButtonStyle.Danger)
+      );
+
+      const mensaje = await interaction.reply({
+        content: `<@${rival.id}>`,
+        embeds: [embed],
+        components: [botones],
+        fetchReply: true
       });
+
+      auraDuels.set(idDuelo, {
+        desafiadorId: interaction.user.id,
+        rivalId: rival.id
+      });
+
+      // El desafío vence después de 60 segundos
+      setTimeout(async () => {
+        const duelo = auraDuels.get(idDuelo);
+
+        if (!duelo) return;
+
+        auraDuels.delete(idDuelo);
+
+        const embedVencido = new EmbedBuilder()
+          .setColor(0x95A5A6)
+          .setTitle("⌛ DESAFÍO VENCIDO")
+          .setDescription(
+            "El desafío de aura venció porque no fue aceptado a tiempo."
+          );
+
+        await mensaje.edit({
+          embeds: [embedVencido],
+          components: []
+        }).catch(() => {});
+      }, 60000);
+
+      return;
     }
 
     // ==============================
