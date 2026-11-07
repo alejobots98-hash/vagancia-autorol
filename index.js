@@ -80,13 +80,159 @@ function crearBotonesVasos(disabled = false) {
 }
 
 // ==============================
+// ⚡ SISTEMA DE AURA
+// ==============================
+
+const auraStats = new Map();
+
+function obtenerStatsAura(userId) {
+  if (!auraStats.has(userId)) {
+    auraStats.set(userId, {
+      victorias: 0,
+      derrotas: 0,
+      empates: 0,
+      duelos: 0,
+      auraTotal: 0
+    });
+  }
+
+  return auraStats.get(userId);
+}
+
+// ==============================
+// ⚡ GENERADOR DE AURA
+// ==============================
+
+function generarAura() {
+  const rand = Math.random();
+
+  let cantidad, categoria, comentario, color;
+
+  if (rand < 0.10) {
+    cantidad = Math.floor(Math.random() * 2001) - 1000;
+    categoria = "💀 AURA INEXISTENTE";
+    comentario = "Ni su propia sombra quiere acompañarlo.";
+    color = 0xE74C3C;
+
+  } else if (rand < 0.25) {
+    cantidad = Math.random() * 10;
+    categoria = "🥔 NPC";
+    comentario = "Tiene menos presencia que un tutorial sin sonido.";
+    color = 0x95A5A6;
+
+  } else if (rand < 0.45) {
+    cantidad = Math.random() * 100;
+    categoria = "🪦 SIN AURA";
+    comentario = "Su aura se fue a comprar pan y nunca volvió.";
+    color = 0xE67E22;
+
+  } else if (rand < 0.70) {
+    cantidad = Math.random() * 1000;
+    categoria = "⚡ AURA NORMAL";
+    comentario = "Tiene una presencia bastante decente.";
+    color = 0xF1C40F;
+
+  } else if (rand < 0.85) {
+    cantidad = Math.random() * 10000;
+    categoria = "🔥 AURA LEGENDARIA";
+    comentario = "Su presencia hace temblar a los NPC.";
+    color = 0x2ECC71;
+
+  } else if (rand < 0.94) {
+    cantidad = Math.random() * 100000;
+    categoria = "👑 AURA DIVINA";
+    comentario = "Hasta los dioses le tienen respeto.";
+    color = 0x3498DB;
+
+  } else if (rand < 0.99) {
+    cantidad = Math.random() * 1000000;
+    categoria = "🌌 AURA CÓSMICA";
+    comentario = "Su aura fue detectada desde otra galaxia.";
+    color = 0x9B59B6;
+
+  } else {
+    cantidad = Math.random() * 100000000;
+    categoria = "💎 ENTIDAD IMPOSIBLE";
+    comentario = "ROMPIÓ EL MEDIDOR. EL UNIVERSO NO PUEDE CONTENER TANTA AURA.";
+    color = 0xE91E63;
+  }
+
+  return {
+    cantidad: Math.floor(cantidad * 100) / 100,
+    categoria,
+    comentario,
+    color
+  };
+}
+
+function formatearAura(numero) {
+  return numero.toLocaleString("es-AR", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  });
+}
+
+// ==============================
+// 💬 FRASES DE AURA
+// ==============================
+
+const frasesGanador = [
+  "Tiene tanta aura que el universo gira alrededor suyo.",
+  "Su presencia genera respeto hasta en los objetos.",
+  "El mismísimo creador le pidió un autógrafo.",
+  "Tiene más aura que todos los usuarios del servidor juntos.",
+  "Su aura fue detectada desde otra galaxia.",
+  "Discord le pidió permiso para existir.",
+  "Es tan legendario que los NPC se arrodillan.",
+  "Su aura no tiene límites. El medidor explotó.",
+  "Nació con más aura de la que el otro tendrá en 10 vidas."
+];
+
+const frasesPerdedor = [
+  "Tiene menos aura que una piedra mojada.",
+  "Su aura está en números negativos.",
+  "Ni su sombra quiere acompañarlo.",
+  "Tiene menos presencia que un NPC sin texturas.",
+  "Su aura se fue a comprar pan y nunca volvió.",
+  "El medidor detectó una presencia inexistente.",
+  "Hasta una papa hervida tiene más aura.",
+  "Discord está considerando eliminar su existencia.",
+  "Su aura fue desconectada por falta de actividad.",
+  "Debe aura al universo.",
+  "El vacío tiene más personalidad."
+];
+
+const frasesEmpate = [
+  "Dos NPC peleando por quién tiene menos aura.",
+  "Duelo cancelado: ninguno de los dos tiene presencia.",
+  "El medidor no sabe a quién humillar primero.",
+  "Ambos necesitan actualizar su existencia.",
+  "Ni siquiera el universo quiere decidir.",
+  "Dos leyendas... pero de la falta de aura."
+];
+
+function fraseAleatoria(lista) {
+  return lista[Math.floor(Math.random() * lista.length)];
+}
+
+// ==============================
 // COMANDOS SLASH
 // ==============================
 
 const commands = [
   new SlashCommandBuilder()
     .setName("apos")
-    .setDescription("Obtener rol de apostador")
+    .setDescription("Obtener rol de apostador"),
+
+  new SlashCommandBuilder()
+    .setName("aura")
+    .setDescription("Desafiá a alguien a una batalla de aura")
+    .addUserOption(option =>
+      option
+        .setName("usuario")
+        .setDescription("La persona a la que querés desafiar")
+        .setRequired(true)
+    )
 ].map(command => command.toJSON());
 
 const rest = new REST({ version: "10" })
@@ -299,7 +445,7 @@ client.once(Events.ClientReady, async () => {
       { body: commands }
     );
 
-    console.log("Comando /apos registrado correctamente.");
+    console.log("Comandos slash registrados correctamente.");
   } catch (error) {
     console.error("Error al registrar comandos slash:", error);
   }
@@ -509,7 +655,11 @@ client.on(Events.MessageCreate, async message => {
 // ==============================
 
 client.on(Events.InteractionCreate, async interaction => {
+
+  // ==============================
   // 🥤 ENCONTRÁ LA BOLITA
+  // ==============================
+
   if (
     interaction.isButton() &&
     interaction.customId.startsWith("bolita_")
@@ -752,10 +902,153 @@ client.on(Events.InteractionCreate, async interaction => {
   }
 
   // ==============================
-  // COMANDO /apos
+  // COMANDOS SLASH
   // ==============================
 
   if (interaction.isChatInputCommand()) {
+
+    // ==============================
+    // ⚡ COMANDO /AURA
+    // ==============================
+
+    if (interaction.commandName === "aura") {
+      const rival = interaction.options.getUser("usuario");
+
+      if (rival.id === interaction.user.id) {
+        return interaction.reply({
+          content: "💀 No podés desafiarte a vos mismo. ¡Necesitás un rival!",
+          ephemeral: true
+        });
+      }
+
+      if (rival.bot) {
+        return interaction.reply({
+          content: "🤖 Los bots no participan en batallas de aura.",
+          ephemeral: true
+        });
+      }
+
+      const jugador1 = interaction.user;
+      const jugador2 = rival;
+
+      const aura1 = generarAura();
+      const aura2 = generarAura();
+
+      const stats1 = obtenerStatsAura(jugador1.id);
+      const stats2 = obtenerStatsAura(jugador2.id);
+
+      stats1.duelos++;
+      stats2.duelos++;
+
+      stats1.auraTotal += aura1.cantidad;
+      stats2.auraTotal += aura2.cantidad;
+
+      let ganador;
+      let fraseFinal;
+      let colorFinal;
+      let resultado;
+
+      if (aura1.cantidad > aura2.cantidad) {
+        ganador = jugador1;
+
+        stats1.victorias++;
+        stats2.derrotas++;
+
+        resultado = `🏆 ¡<@${ganador.id}> GANÓ LA BATALLA!`;
+
+        fraseFinal =
+          `👑 **${fraseAleatoria(frasesGanador)}**\n\n` +
+          `💀 **${fraseAleatoria(frasesPerdedor)}**`;
+
+        colorFinal = 0x2ECC71;
+
+      } else if (aura2.cantidad > aura1.cantidad) {
+        ganador = jugador2;
+
+        stats2.victorias++;
+        stats1.derrotas++;
+
+        resultado = `🏆 ¡<@${ganador.id}> GANÓ LA BATALLA!`;
+
+        fraseFinal =
+          `👑 **${fraseAleatoria(frasesGanador)}**\n\n` +
+          `💀 **${fraseAleatoria(frasesPerdedor)}**`;
+
+        colorFinal = 0x2ECC71;
+
+      } else {
+        stats1.empates++;
+        stats2.empates++;
+
+        resultado = "🤝 ¡EMPATE!";
+
+        fraseFinal = `😂 **${fraseAleatoria(frasesEmpate)}**`;
+
+        colorFinal = 0xF1C40F;
+      }
+
+      const embed = new EmbedBuilder()
+        .setColor(colorFinal)
+        .setTitle("⚡ BATALLA DE AURA")
+        .setDescription(
+          `**${jugador1.username}** desafió a **${jugador2.username}**.\n\n` +
+          "⚔️ ¡El duelo de aura ha terminado!"
+        )
+        .addFields(
+          {
+            name: `👤 ${jugador1.username}`,
+            value:
+              `**${formatearAura(aura1.cantidad)}** de aura\n` +
+              `${aura1.categoria}\n` +
+              `_${aura1.comentario}_`,
+            inline: true
+          },
+          {
+            name: `👤 ${jugador2.username}`,
+            value:
+              `**${formatearAura(aura2.cantidad)}** de aura\n` +
+              `${aura2.categoria}\n` +
+              `_${aura2.comentario}_`,
+            inline: true
+          },
+          {
+            name: "🏆 RESULTADO",
+            value: resultado
+          },
+          {
+            name: "💬 VEREDICTO DEL MEDIDOR",
+            value: fraseFinal
+          },
+          {
+            name: "📊 ESTADÍSTICAS",
+            value:
+              `**${jugador1.username}:**\n` +
+              `🏆 Victorias: ${stats1.victorias}\n` +
+              `💀 Derrotas: ${stats1.derrotas}\n` +
+              `🤝 Empates: ${stats1.empates}\n` +
+              `⚔️ Duelos: ${stats1.duelos}\n\n` +
+              `**${jugador2.username}:**\n` +
+              `🏆 Victorias: ${stats2.victorias}\n` +
+              `💀 Derrotas: ${stats2.derrotas}\n` +
+              `🤝 Empates: ${stats2.empates}\n` +
+              `⚔️ Duelos: ${stats2.duelos}`
+          }
+        )
+        .setFooter({
+          text: "LA VAGANCIA • Sistema de aura aleatorio"
+        })
+        .setTimestamp();
+
+      return interaction.reply({
+        content: `⚡ <@${jugador1.id}> VS <@${jugador2.id}>`,
+        embeds: [embed]
+      });
+    }
+
+    // ==============================
+    // COMANDO /apos
+    // ==============================
+
     if (interaction.commandName === "apos") {
       const embed = new EmbedBuilder()
         .setColor("#2b2d31")
